@@ -64,7 +64,7 @@ async def create_orders(
     new_user_id = db[0].fetchone()[0]
     db[1].commit()
 
-    return {"OrderID": new_user_id, 
+    return {"OrderID": order_id, 
             "orderStatus": OrderStatus,
             "orderDate": orderDate,
             "orderTime": orderTime,
