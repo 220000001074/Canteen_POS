@@ -2,7 +2,13 @@
 from fastapi import Depends, HTTPException, APIRouter, Form
 from .db import get_db
 import bcrypt
+from pydantic import BaseModel
+class PaymentCreate(BaseModel):
+    transaction_id: int
+    payment_type: str
 
+PaymentRouter = APIRouter()
+PaymentRouter = APIRouter(tags=["payment"])
 paymentRouter = APIRouter(tags=["Payment"])
 
 
