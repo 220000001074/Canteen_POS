@@ -40,14 +40,14 @@ async def read_transaction_by_id(
 
 @transactionRouter.post("/transaction/", response_model=dict)
 async def create_transaction(
-    TransactionID: int, 
-    ItemID: int, 
-    SubTotal: float,  
+    transaction_id: int, 
+    item_id: int, 
+    sub_total: float,  
     db=Depends(get_db)
 ):
 
     query = "INSERT INTO transaction (TransactionID, ItemID, SubTotal) VALUES ( %s, %s, %s)"
-    db[0].execute(query, (TransactionID, ItemID, SubTotal))
+    db[0].execute(query, (transaction_id, item_id, sub_total))
 
     # Retrieve the last inserted ID using LAST_INSERT_ID()
     db[0].execute("SELECT LAST_INSERT_ID()")
@@ -55,33 +55,14 @@ async def create_transaction(
     db[1].commit()
 
     return {
-        "TransactionID": TransactionID, 
-        "ItemID": ItemID,
-        "SubTotal": SubTotal,     
+        "TransactionID": transaction_id, 
+        "ItemID": item_id,
+        "SubTotal": sub_total,     
     }
 
 
 # ----------------PUT/UPDATE------------------------------------------------
-# @transactionRouter.put("/transaction/{TransactionID}", response_model=dict)
-# async def update_transaction(
-#     TransactionID: int,
-#     ItemID: int,
-#     OrderID: int,
-#     SubTotal: float,
-#     db=Depends(get_db)
-# ):
 
-#     # Update transaction information in the database 
-#     query = "UPDATE transaction SET ItemID = %s, OrderID = %s, SubTotal = %s  WHERE TransactionID = %s"
-#     db[0].execute(query, (ItemID, OrderID, SubTotal, TransactionID))
-
-#     # Check if the update was successful
-#     if db[0].rowcount > 0:
-#         db[1].commit()
-#         return {"message": "transaction updated successfully"}
-    
-#     # If no rows were affected, cashier not found
-#     raise HTTPException(status_code=404, detail="transaction not found")
 
 @transactionRouter.put("/transaction/{transactionid}", response_model=dict)
 async def update_transaction(
