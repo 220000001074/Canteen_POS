@@ -35,6 +35,29 @@ async def read_menu(
 
 # -----------------------------POST/CREATE----------------------------------
 
+# @menuRouter.post("/menu/", response_model=dict)
+# async def create_item(
+#     item_id: int = Form(...), 
+#     menuItemCategory: str = Form(...), 
+#     menuItemName: str = Form(...),
+#     menuItemPrice: int = Form(...),  
+#     db=Depends(get_db)
+# ):
+
+#     query = "INSERT INTO menu (ItemID, menuItemCategory, menuItemName, menuItemPrice) VALUES (%s, %s, %s, %s)"
+#     db[0].execute(query, (item_id, menuItemCategory, menuItemName, menuItemPrice))
+
+#     # Retrieve the last inserted ID using LAST_INSERT_ID()
+#     db[0].execute("SELECT LAST_INSERT_ID()")
+#     new_user_id = db[0].fetchone()[0]
+#     db[1].commit()
+
+#     return {"item_id": new_user_id, 
+#             "menuItemCategory": menuItemCategory,
+#             "menuItemName": menuItemName,
+#             "menuItemPrice": menuItemPrice,     
+#             }
+
 @menuRouter.post("/menu/", response_model=dict)
 async def create_item(
     item_id: int = Form(...), 
@@ -52,13 +75,11 @@ async def create_item(
     new_user_id = db[0].fetchone()[0]
     db[1].commit()
 
-    return {"item_id": new_user_id, 
+    return {"item_id": item_id, 
             "menuItemCategory": menuItemCategory,
             "menuItemName": menuItemName,
             "menuItemPrice": menuItemPrice,     
             }
-
-
 
 
 # ----------------PUT/UPDATE------------------------------------------------
