@@ -38,21 +38,63 @@ async def read_transaction_by_id(
 
 # -----------------------------POST/CREATE----------------------------------
 
+@transactionRouter.post("/transaction/", response_model=dict)
+async def create_transaction(
+    TransactionID: int, 
+    ItemID: int, 
+    SubTotal: float,  
+    db=Depends(get_db)
+):
+
+    query = "INSERT INTO transaction (TransactionID, ItemID, SubTotal) VALUES ( %s, %s, %s)"
+    db[0].execute(query, (TransactionID, ItemID, SubTotal))
+
+    # Retrieve the last inserted ID using LAST_INSERT_ID()
+    db[0].execute("SELECT LAST_INSERT_ID()")
+    new_user_id = db[0].fetchone()[0]
+    db[1].commit()
+
+    return {
+        "TransactionID": TransactionID, 
+        "ItemID": ItemID,
+        "SubTotal": SubTotal,     
+    }
 
 
 # ----------------PUT/UPDATE------------------------------------------------
-@transactionRouter.put("/transaction/{trans_id}", response_model=dict)
+# @transactionRouter.put("/transaction/{TransactionID}", response_model=dict)
+# async def update_transaction(
+#     TransactionID: int,
+#     ItemID: int,
+#     OrderID: int,
+#     SubTotal: float,
+#     db=Depends(get_db)
+# ):
+
+#     # Update transaction information in the database 
+#     query = "UPDATE transaction SET ItemID = %s, OrderID = %s, SubTotal = %s  WHERE TransactionID = %s"
+#     db[0].execute(query, (ItemID, OrderID, SubTotal, TransactionID))
+
+#     # Check if the update was successful
+#     if db[0].rowcount > 0:
+#         db[1].commit()
+#         return {"message": "transaction updated successfully"}
+    
+#     # If no rows were affected, cashier not found
+#     raise HTTPException(status_code=404, detail="transaction not found")
+
+@transactionRouter.put("/transaction/{transactionid}", response_model=dict)
 async def update_transaction(
-    trans_id: int,
-    ItemID: int,
-    OrderID: int,
+    transactionid: int,
+    item_id: int,
+    order_id: int,
     SubTotal: float,
     db=Depends(get_db)
 ):
 
-    # Update transaction information in the database 
+    # Update cashier information in the database 
     query = "UPDATE transaction SET ItemID = %s, OrderID = %s, SubTotal = %s  WHERE TransactionID = %s"
-    db[0].execute(query, (ItemID, OrderID, SubTotal, trans_id))
+    db[0].execute(query, (item_id, order_id, SubTotal, transactionid))
 
     # Check if the update was successful
     if db[0].rowcount > 0:
