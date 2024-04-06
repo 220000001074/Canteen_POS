@@ -89,7 +89,7 @@ async def update_cashier(
 
 
 
-# -------------------DELETE------------------------------------------------------
+# -------------------DELETE-------------------------------
 @cashierRouter.delete("/cashier/{cashier_id}")
 async def delete_cashier(cashier_id: int, 
                         db=Depends(get_db)):
