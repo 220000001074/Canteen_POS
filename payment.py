@@ -58,7 +58,7 @@ async def create_payment(
     new_user_id = db[0].fetchone()[0]
     db[1].commit()
 
-    return {"PaymentID": new_user_id, 
+    return {"PaymentID": payment_id, 
             "TransactionID": TransactionID,
             "PaymentType": PaymentType,  
             }
@@ -69,7 +69,7 @@ async def create_payment(
 # -------------------------------PUT/UPDATE------------------------
 @paymentRouter.put("/payment/{payment_id}", response_model=dict)
 async def update_payment(
-    payment_id: int,
+    PaymentID: int,
     TransactionID: int,
     PaymentType: str,
     db=Depends(get_db)
@@ -77,7 +77,7 @@ async def update_payment(
 
     # Update payment information in the database 
     query = "UPDATE payment SET TransactionID = %s, PaymentType = %s  WHERE PaymentID = %s"
-    db[0].execute(query, (TransactionID, PaymentType, payment_id))
+    db[0].execute(query, (TransactionID, PaymentType, PaymentID))
 
     # Check if the update was successful
     if db[0].rowcount > 0:
