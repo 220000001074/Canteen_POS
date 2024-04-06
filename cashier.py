@@ -1,9 +1,16 @@
 # model/cashier.py
+from asyncio.log import logger
 from fastapi import Depends, HTTPException, APIRouter, Form
 from .db import get_db
 import bcrypt
+from typing import Optional
+from pydantic import BaseModel
+import mysql.connector
+class CashierCreate(BaseModel):
+    username: str
+    password: str
 
-cashierRouter = APIRouter(tags=["Cashier"])
+cashierRouter = APIRouter(tags=["Cashier"]) 
 
 # CRUD operation
 
@@ -33,129 +40,81 @@ async def read_cashier(
     raise HTTPException(status_code=404, detail="Cashier not found")
 
 
-#PUT
 
 
-@cashierRouter.put("/cashier/{CashierID}", response_model=dict)
+# --------------------POST---------------------------------------------------------------
+@cashierRouter.post("/cashier/", response_model=CashierCreate)
+async def create_cashier(cashier: CashierCreate, db=Depends(get_db)):
+    try:
+        # Construct the SQL query to insert a new cashier
+        query = "INSERT INTO cashier (username, password) VALUES (%s, %s)"
+        # Execute the query with the provided data
+        db[0].execute(query, (cashier.username, cashier.password))
+        # Commit the transaction
+        db[1].commit()
+        # Return the created cashier
+        return cashier
+    except Exception as e:
+        # If an error occurs, raise an HTTPException with a 500 status code
+        raise HTTPException(status_code=500, detail=f"Internal Server Error: {str(e)}")
+    finally:
+        # Close the cursor and database connection
+        db[0].close()
+
+
+
+# -------------------------------PUT/UPDATE---------------------------------------------
+@cashierRouter.put("/cashier/{cashierid}", response_model=dict)
 async def update_cashier(
-    CashierID: int,
-
-    username: str = Form(...),
-    password: str = Form(...),
+    cashierid: int,
+    username: str,
+    password: str,
     db=Depends(get_db)
 ):
+    str_password = str(password)
     # Hash the password using bcrypt
-    hashed_password = hash_password(password)
+    hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
 
-    # Update user information in the database 
-    query = "UPDATE users SET email = %s, username = %s, password = %s WHERE id = %s"
-    db[0].execute(query, (email, username, hashed_password, user_id))
+    # Update cashier information in the database 
+    query = "UPDATE cashier SET username = %s, password = %s WHERE cashierID = %s"
+    db[0].execute(query, (username, hashed_password, cashierid))
 
     # Check if the update was successful
     if db[0].rowcount > 0:
         db[1].commit()
-        return {"message": "User updated successfully"}
+        return {"message": "Cashier updated successfully"}
     
-    # If no rows were affected, user not found
-    raise HTTPException(status_code=404, detail="User not found")
+    # If no rows were affected, cashier not found
+    raise HTTPException(status_code=404, detail="Cashier not found")
 
 
-#Given Code
 
-# @cashierRouter.get("/users/", response_model=list)
-# async def read_users(
-#     db=Depends(get_db)
-# ):
-#     query = "SELECT id, username FROM users"
-#     db[0].execute(query)
-#     users = [{"id": user[0], "username": user[1]} for user in db[0].fetchall()]
-#     return users
+# -------------------DELETE------------------------------------------------------
+@cashierRouter.delete("/cashier/{cashier_id}")
+async def delete_cashier(cashier_id: int, 
+                        db=Depends(get_db)):
+    try:
+        # Check if the cashier exists
+        query_check_cashier = "SELECT cashierID FROM cashier WHERE cashierID = %s"
+        db[0].execute(query_check_cashier, (cashier_id,))
+        existing_cashier = db[0].fetchone()
 
-# @cashierRouter.get("/users/{user_id}", response_model=dict)
-# async def read_user(
-#     user_id: int, 
-#     db=Depends(get_db)
-# ):
-#     query = "SELECT id, username FROM users WHERE id = %s"
-#     db[0].execute(query, (user_id,))
-#     user = db[0].fetchone()
-#     if user:
-#         return {"id": user[0], "username": user[1]}
-#     raise HTTPException(status_code=404, detail="User not found")
+        # If the cashier does not exist, raise HTTPException with 404 status code
+        if not existing_cashier:
+            raise HTTPException(status_code=404, detail="Cashier not found")
 
-# @cashierRouter.post("/users/", response_model=dict)
-# async def create_user(
-#     email: str = Form(...), 
-#     username: str = Form(...), 
-#     password: str = Form(...), 
-#     db=Depends(get_db)
-# ):
-#     # Hash the password using bcrypt
-#     hashed_password = hash_password(password)
+        # Delete the cashier from the database
+        query_delete_cashier = "DELETE FROM cashier WHERE cashierID = %s"
+        db[0].execute(query_delete_cashier, (cashier_id,))
+        db[1].commit()
 
-#     query = "INSERT INTO users (email, username, password) VALUES (%s, %s, %s)"
-#     db[0].execute(query, (email, username, hashed_password))
+        # Return success message
+        return {"message": "Cashier deleted successfully"}
+    except Exception as e:
+        # If an error occurs, raise HTTPException with 500 status code
+        raise HTTPException(status_code=500, detail=f"Internal Server Error: {str(e)}")
+    finally:
+        # Close the cursor and database connection
+        db[0].close()
 
-#     # Retrieve the last inserted ID using LAST_INSERT_ID()
-#     db[0].execute("SELECT LAST_INSERT_ID()")
-#     new_user_id = db[0].fetchone()[0]
-#     db[1].commit()
 
-#     return {"id": new_user_id, "username": username}
-
-# @cashierRouter.put("/users/{user_id}", response_model=dict)
-# async def update_user(
-#     user_id: int,
-#     email: str = Form(...),
-#     username: str = Form(...),
-#     password: str = Form(...),
-#     db=Depends(get_db)
-# ):
-#     # Hash the password using bcrypt
-#     hashed_password = hash_password(password)
-
-#     # Update user information in the database 
-#     query = "UPDATE users SET email = %s, username = %s, password = %s WHERE id = %s"
-#     db[0].execute(query, (email, username, hashed_password, user_id))
-
-#     # Check if the update was successful
-#     if db[0].rowcount > 0:
-#         db[1].commit()
-#         return {"message": "User updated successfully"}
-    
-#     # If no rows were affected, user not found
-#     raise HTTPException(status_code=404, detail="User not found")
-
-# @cashierRouter.delete("/users/{user_id}", response_model=dict)
-# async def delete_user(
-#     user_id: int,
-#     db=Depends(get_db)
-# ):
-#     try:
-#         # Check if the user exists
-#         query_check_user = "SELECT id FROM users WHERE id = %s"
-#         db[0].execute(query_check_user, (user_id,))
-#         existing_user = db[0].fetchone()
-
-#         if not existing_user:
-#             raise HTTPException(status_code=404, detail="User not found")
-
-#         # Delete the user
-#         query_delete_user = "DELETE FROM users WHERE id = %s"
-#         db[0].execute(query_delete_user, (user_id,))
-#         db[1].commit()
-
-#         return {"message": "User deleted successfully"}
-#     except Exception as e:
-#         # Handle other exceptions if necessary
-#         raise HTTPException(status_code=500, detail=f"Internal Server Error: {str(e)}")
-#     finally:
-#         # Close the database cursor
-#         db[0].close()
-
-# # Password hashing function using bcrypt
-# def hash_password(password: str):
-#     # Generate a salt and hash the password
-#     salt = bcrypt.gensalt()
-#     hashed_password = bcrypt.hashpw(password.encode('utf-8'), salt)
-#     return hashed_password.decode('utf-8')  # Decode bytes to string for storage
