@@ -2,6 +2,7 @@
 from fastapi import Depends, HTTPException, APIRouter, Form
 from .db import get_db
 import bcrypt
+from fastapi import FastAPI
 
 transactionRouter = APIRouter(tags=["Transaction"])
 
@@ -38,25 +39,6 @@ async def read_transaction_by_id(
 # -----------------------------POST/CREATE----------------------------------
 
 
-@transactionRouter.post("/transaction/", response_model=transactionCreate)
-async def create_transaction(transaction: transactionCreate, db=Depends(get_db)):
-    try:
-        # Construct the SQL query to insert a new transaction
-        query = "INSERT INTO transaction (username, password) VALUES (%s, %s)"
-        # Execute the query with the provided data
-        db[0].execute(query, (transaction.username, transaction.password))
-        # Commit the transaction
-        db[1].commit()
-        # Return the created transaction
-        return transaction
-    except Exception as e:
-        # If an error occurs, raise an HTTPException with a 500 status code
-        raise HTTPException(status_code=500, detail=f"Internal Server Error: {str(e)}")
-    finally:
-        # Close the cursor and database connection
-        db[0].close()
-
-
 
 # ----------------PUT/UPDATE------------------------------------------------
 @transactionRouter.put("/transaction/{trans_id}", response_model=dict)
@@ -69,7 +51,7 @@ async def update_transaction(
 ):
 
     # Update transaction information in the database 
-    query = "UPDATE transaction SET ItemID = %s, OrderID = %s, SubTotal =%s  WHERE TransactionID = %s"
+    query = "UPDATE transaction SET ItemID = %s, OrderID = %s, SubTotal = %s  WHERE TransactionID = %s"
     db[0].execute(query, (ItemID, OrderID, SubTotal, trans_id))
 
     # Check if the update was successful
